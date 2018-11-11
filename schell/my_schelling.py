@@ -112,7 +112,7 @@ class Board:
 		self.height = height
 		self.empty_ratio = empty_ratio
 
-	def print(self):
+	def printBoard(self):
 		print('a board')
 
 	def create(self):
