@@ -1,0 +1,5 @@
+board of 30x30 took an average time of 0.01 second per iteration
+board of 60x60 took an average time of 0.02 second per iteration
+board of 120x120 took an average time of 0.09 second per iteration
+board of 240x240 took an average time of 0.37 second per iteration
+board of 480x480 took an average time of 1 second per iteration

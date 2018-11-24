@@ -13,11 +13,47 @@ An implementation of the Schelling's segregation model.
 import argparse
 import random
 import math
+import abc
+import numpy as np
+import matplotlib as plt
 
 # Python Packages
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import pendulum
+
+
+
+class AbstractAgentStrategy(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def rank_diff(self):
+        """Required Method"""
+        
+class RacialStrategy(AbstractAgentStrategy):
+    def rank_diff(self, agent):
+        #print('Racial Strat')
+        if self.race == agent.race:
+            return 0
+        else:
+            return 1
+
+class EconomicStrategy(AbstractAgentStrategy):
+    def rank_diff(self, agent):
+        #print('Economic Strat')
+        if self.income == agent.income:
+            return 0
+        else:
+            return 1
+
+class AcademicStrategy(AbstractAgentStrategy):
+    def rank_diff(self, agent):
+        #print('Academic Strat')
+        if self.academic == agent.academic:
+            return 0
+        else:
+            return 1
 
 
 class Agent:
@@ -33,6 +69,22 @@ class Agent:
         self.race = race
         self.x = x
         self.y = y
+        
+        if race == 0:
+            self.behav = RacialStrategy
+            self.income = 0
+            self.academic = 0
+        elif race == 1:
+            self.behav = EconomicStrategy
+            self.income = 1
+            self.academic = 0
+        elif race == 2:
+            self.behav = AcademicStrategy
+            self.income = 0
+            self.academic = 1
+        else:
+            print('problems instantiating agent')
+
 
     def set_pair(self, pair):
         """
@@ -48,10 +100,12 @@ class Agent:
     def rank_diff(self, agent):
         # can return some more complicated difference
         # implement via strategy pattern
-        if agent.race == self.race:
-            return 0
-        else:
-            return 1
+        
+        return self.behav.rank_diff(self,agent)
+#         if agent.race == self.race:
+#             return 0
+#         else:
+#             return 1
 
     def is_happy(self, neighbours):
         """
@@ -69,6 +123,12 @@ class Agent:
                 happy_with_neighbour += 1
 
         return total == 0 or (happy_with_neighbour / total) >= self.intolerance
+
+
+
+# Agent Behaviours
+
+
 
 
 class Board:
@@ -117,7 +177,7 @@ class Board:
             with the threshold of intolerance for each race (list index)
         :return: nothing
         """
-
+        uniq_races = []
         self.create_empty_houses()
         agents = []
         for y in range(self.height):
@@ -125,9 +185,12 @@ class Board:
                 if (x, y) not in self.empty_houses:
                     race_gen = random.uniform(0, 1)
                     race = next(aux[0] for aux in enumerate(agent_prob) if aux[1] >= race_gen)
+                    uniq_races.append(race)
                     agent = Agent(race, intolerance_threshold[race], x, y)
                     agents.append(agent)
                     self.matrix[y][x] = agent
+                    
+        print(np.unique(uniq_races))
 
     def neighbours(self, agent):
         """
@@ -173,8 +236,9 @@ class Board:
         :param num_iterations: int, number of iterations to run this function
         :return: nothing
         """
-
+        tot_iters = 0
         for iteration in range(num_iterations):
+            print(iteration)
             unhappy = 0
             for y in range(self.height):
                 for x in range(self.width):
@@ -185,10 +249,15 @@ class Board:
                         if not happy:
                             unhappy += 1
                             self.move_agent(agent)
-            print('There was {} unhappy agents at iteration {}.'.format(unhappy, iteration))
+            #print('There was {} unhappy agents at iteration {}.'.format(unhappy, iteration))
             if unhappy == 0:
-                print('Everyone was happy by iteration {}.'.format(iteration))
+                tot_iters += 1
+                #print('Everyone was happy by iteration {}.'.format(iteration))
                 break
+        
+            tot_iters += 1
+        
+        return tot_iters
 
     def plot(self, num_races, title, file_name):
         """
@@ -230,56 +299,63 @@ def main():
 
     :return: nothing
     """
+    sizes = [30,60,120,240,480]
+    avg_times = []
+    
+    for i in range(len(sizes)):
+        ##
+        ##sequence for 3 agents is 
+        ##RACE - ECONOMIC - ACADEMIC
+        
+        width = sizes[i]
+        height = sizes[i]
+        empty_ratio = 0.3
+        agent_prob = [0.3, 0.6, 1]
+        intolerance_threshold = [0.7,0.7,0.4]
+        num_races = 3
+        num_iterations = 5000
+        
+        board = Board(width, height, empty_ratio)
+        print("POPULATING")
+        board.populate(agent_prob, intolerance_threshold)
+    
+        board.plot(num_races,
+                   'Schelling Model {}x{} with {} colors: Initial State'
+                   .format(width, height, num_races),
+                   'board_{}x{}_beginning.png'.format(width, height))
+        
+        print("RUNNING")
+        time_0 = pendulum.now()
+        iters = board.run(num_iterations)
+        
+        print(f"Total iterations were {iters}")
+        time_1 = pendulum.now()
+        delta = time_1 - time_0
+        
+        final_time = delta/iters
+        
+        avg_times.append(final_time)
+    
+        board.plot(num_races,
+                   'Schelling Model {}x{} with {} colors: Final State'
+                   .format(width, height, num_races),
+                   'board_{}x{}_end.png'.format(width, height))
+    
 
-    parser = argparse.ArgumentParser(description='Simulate Schelling\'s segregation model.')
+        print('This execution ran for {}'.format(delta.as_timedelta()))
+        print(f'Average time per cycle was {final_time}')
 
-    parser.add_argument('-wi', '--width', dest='width',
-                        default=100, nargs='?', type=int,
-                        help='board\'s width')
-    parser.add_argument('-he', '--height', dest='height',
-                        default=100, nargs='?', type=int,
-                        help='board\'s height')
-    parser.add_argument('-e', '--empty_ration', dest='empty_ratio',
-                        default=0.10, nargs='?', type=float,
-                        help='board\'s percentage of empty houses (zero to one)')
-    parser.add_argument('-r', '--num_races', dest='num_races',
-                        default=2, nargs='?', type=int,
-                        help='number of races')
-    parser.add_argument('-a', '--agents', dest='agent_prob',
-                        default=[0.5, 1], nargs='*', type=float,
-                        help='list of size equal to the number of races'
-                             'where it\'s the accumulative probability'
-                             'of spawning an agent of that race (their index)')
-    parser.add_argument('-t', '--intolerance', dest='intolerance_threshold',
-                        default=[0.5, 0.5], nargs='*', type=float,
-                        help='list of size equal to the number of races'
-                             'where it\'s the intolerance threshold'
-                             'of an agent of that race (their index)')
-    parser.add_argument('-i', '--num_iterations', dest='num_iterations',
-                        default=500, nargs='?', type=int,
-                        help='number of iterations')
 
-    args = parser.parse_args()
+    
+    for i in range(len(sizes)):
+        print(f"board of {sizes[i]}x{sizes[i]} took an average time of {avg_times[i]} per iteration")
 
-    time_0 = pendulum.now()
-    board = Board(args.width, args.height, args.empty_ratio)
-    board.populate(args.agent_prob, args.intolerance_threshold)
 
-    board.plot(args.num_races,
-               'Schelling Model {}x{} with {} colors: Initial State'
-               .format(args.width, args.height, args.num_races),
-               'board_{}x{}_beginning.png'.format(args.width, args.height))
+    t = np.arange(0.00, 0.1, 0.1)
+    
+#     print(sizes)
+#     print(avg_times)
 
-    board.run(args.num_iterations)
-
-    board.plot(args.num_races,
-               'Schelling Model {}x{} with {} colors: Final State'
-               .format(args.width, args.height, args.num_races),
-               'board_{}x{}_end.png'.format(args.width, args.height))
-
-    time_1 = pendulum.now()
-    delta = time_1 - time_0
-    print('This execution ran for {}'.format(delta.as_timedelta()))
 
 
 if __name__ == "__main__":
