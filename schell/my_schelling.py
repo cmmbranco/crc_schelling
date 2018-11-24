@@ -299,54 +299,92 @@ def main():
 
     :return: nothing
     """
-    sizes = [30,60,120,240,480]
-    avg_times = []
     
-    for i in range(len(sizes)):
-        ##
-        ##sequence for 3 agents is 
-        ##RACE - ECONOMIC - ACADEMIC
+    """    In file program initialization
+        sizes = [30,60,120,240,480]
+        avg_times = []
         
-        width = sizes[i]
-        height = sizes[i]
-        empty_ratio = 0.3
-        agent_prob = [0.3, 0.6, 1]
-        intolerance_threshold = [0.7,0.7,0.4]
-        num_races = 3
-        num_iterations = 5000
+        times = [0.01, 0.02, 0.09, 0.37, 1] 
+        sizes = ['30x30', '60x60',]
         
-        board = Board(width, height, empty_ratio)
-        print("POPULATING")
-        board.populate(agent_prob, intolerance_threshold)
-    
-        board.plot(num_races,
-                   'Schelling Model {}x{} with {} colors: Initial State'
-                   .format(width, height, num_races),
-                   'board_{}x{}_beginning.png'.format(width, height))
-        
-        print("RUNNING")
-        time_0 = pendulum.now()
-        iters = board.run(num_iterations)
-        
-        print(f"Total iterations were {iters}")
-        time_1 = pendulum.now()
-        delta = time_1 - time_0
-        
-        final_time = delta/iters
-        
-        avg_times.append(final_time)
-    
-        board.plot(num_races,
-                   'Schelling Model {}x{} with {} colors: Final State'
-                   .format(width, height, num_races),
-                   'board_{}x{}_end.png'.format(width, height))
-    
-
-        print('This execution ran for {}'.format(delta.as_timedelta()))
-        print(f'Average time per cycle was {final_time}')
+        for i in range(len(sizes)):
+            ##
+            ##sequence for 3 agents is 
+            ##RACE - ECONOMIC - ACADEMIC
+            
+            width = sizes[i]
+            height = sizes[i]
+            empty_ratio = 0.3
+            agent_prob = [0.3, 0.6, 1]
+            intolerance_threshold = [0.7,0.7,0.4]
+            num_races = 3
+            num_iterations = 5000
+    """
 
 
+    parser = argparse.ArgumentParser(description='Simulate Schelling\'s segregation model.')
+    parser.add_argument('-wi', '--width', dest='width',
+                        default=100, nargs='?', type=int,
+                        help='board\'s width')
+    parser.add_argument('-he', '--height', dest='height',
+                        default=100, nargs='?', type=int,
+                        help='board\'s height')
+    parser.add_argument('-e', '--empty_ration', dest='empty_ratio',
+                        default=0.10, nargs='?', type=float,
+                        help='board\'s percentage of empty houses (zero to one)')
+    parser.add_argument('-r', '--num_races', dest='num_races',
+                        default=2, nargs='?', type=int,
+                        help='number of races')
+    parser.add_argument('-a', '--agents', dest='agent_prob',
+                        default=[0.5, 1], nargs='*', type=float,
+                        help='list of size equal to the number of races'
+                             'where it\'s the accumulative probability'
+                             'of spawning an agent of that race (their index)')
+    parser.add_argument('-t', '--intolerance', dest='intolerance_threshold',
+                        default=[0.5, 0.5], nargs='*', type=float,
+                        help='list of size equal to the number of races'
+                             'where it\'s the intolerance threshold'
+                             'of an agent of that race (their index)')
+    parser.add_argument('-i', '--num_iterations', dest='num_iterations',
+                        default=500, nargs='?', type=int,
+                        help='number of iterations')
     
+    
+    args = parser.parse_args()
+    
+    board = Board(args.width, args.height, args.empty_ratio)
+    print("POPULATING")
+    board.populate(args.agent_prob, args.intolerance_threshold)
+
+    board.plot(args.num_races,
+               'Schelling Model {}x{} with {} colors: Initial State'
+               .format(args.width, args.height, args.num_races),
+               'board_{}x{}_beginning.png'.format(args.width, args.height))
+    
+    print("RUNNING")
+    time_0 = pendulum.now()
+    iters = board.run(args.num_iterations)
+    
+    print(f"Total iterations were {iters}")
+    time_1 = pendulum.now()
+    delta = time_1 - time_0
+    
+    final_time = delta/iters
+    
+#     avg_times.append(final_time)
+
+    board.plot(args.num_races,
+               'Schelling Model {}x{} with {} colors: Final State'
+               .format(args.width, args.height, args.num_races),
+               'board_{}x{}_end.png'.format(args.width, args.height))
+
+
+    print('This execution ran for {}'.format(delta.as_timedelta()))
+    print(f'Average time per cycle was {final_time}')
+
+
+"""
+#average loop time calculation, only to be used with in file parameter specification
     for i in range(len(sizes)):
         print(f"board of {sizes[i]}x{sizes[i]} took an average time of {avg_times[i]} per iteration")
 
@@ -355,7 +393,7 @@ def main():
     
 #     print(sizes)
 #     print(avg_times)
-
+"""
 
 
 if __name__ == "__main__":
