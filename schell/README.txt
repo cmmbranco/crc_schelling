@@ -23,3 +23,5 @@ To change parameters you can do so by passing arguments in the console.
 Do './schelling.py -h' to see what arguments to pass, most are intuitive, two may not be so, they are explained
 with some more detail in the report, right at the top of the Results section.
 
+The program outputs some information about the time taken to run it on the console and saves two plots to current folder.
+The Initial State Board and the Final State Board.

@@ -27,8 +27,8 @@ plt.savefig('plot/total_time_plot.png')
 plt.show()
 
 intolerance = [0.05 * i for i in range(1, 18)]
-segregation = [51.55, 51.21, 55.23, 57.28, 58.69, 75.76, 77.74, 84.54, 87.76,
-               88.46, 93.36, 97.25, 99.14, 99.49, 99.78, 99.73, 99.55]
+segregation = [51.24, 51.19, 55.48, 56.83, 58.02, 75.25, 77.24, 84.15, 88.00,
+               88.12, 93.36, 97.22, 97.71, 99.20, 99.78, 99.70, 99.62]
 plt.plot(intolerance, segregation)
 plt.title('Segregation vs Intolerance')
 plt.savefig('plot/segregation_plot.png')
